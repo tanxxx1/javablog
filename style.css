@@ -1,3 +1,7 @@
+/* ============================================
+   Java 学习笔记 — 清新 · 专业 · 有呼吸感
+   ============================================ */
+
 * {
   margin: 0;
   padding: 0;
@@ -6,195 +10,250 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Microsoft YaHei", sans-serif;
-  background: #faf9f6;
-  color: #333;
-  line-height: 1.8;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 24px 20px 60px;
+    "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  background: #f0f2f5;
+  color: #3a3f47;
+  line-height: 1.9;
+  min-height: 100vh;
 }
 
-/* ===== 页头 ===== */
+/* ===== 顶部渐变装饰条 ===== */
+.top-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #2563eb, #6366f1, #7c3aed, #06b6d4);
+}
+
+/* ===== 页头（深蓝色导航栏风格） ===== */
 header {
+  background: #1a2744;
+  color: #fff;
   text-align: center;
-  padding: 48px 0 36px;
-  border-bottom: 2px solid #e8e4dc;
-  margin-bottom: 36px;
+  padding: 44px 20px 40px;
 }
 
 header h1 {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
-  color: #2c2c2c;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  color: #fff;
 }
 
 .subtitle {
   margin-top: 8px;
   font-size: 15px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
 }
 
-/* ===== 笔记列表（首页） ===== */
+/* ===== 主内容区 ===== */
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+
+/* ===== 笔记列表卡片（首页） ===== */
 .note-list {
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .note-list li {
-  border-bottom: 1px solid #eee;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06),
+              0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.note-list li:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.10),
+              0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .note-list a {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 18px 4px;
+  padding: 20px 24px;
   text-decoration: none;
-  color: #444;
-  transition: all 0.2s;
-}
-
-.note-list a:hover {
-  background: #fffdf7;
-  padding-left: 12px;
+  color: #3a3f47;
+  border-radius: 12px;
 }
 
 .note-list a:hover .note-title {
-  color: #b45309;
+  color: #2563eb;
 }
 
 .note-title {
   font-size: 17px;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .note-date {
   font-size: 13px;
-  color: #aaa;
+  color: #8b919a;
   white-space: nowrap;
   margin-left: 16px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== 笔记详情页 ===== */
+article {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
 article h2 {
-  font-size: 24px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a2744;
+  margin-top: 8px;
   margin-bottom: 6px;
 }
 
 .article-date {
   font-size: 14px;
-  color: #999;
-  margin-bottom: 32px;
+  color: #8b919a;
+  margin-bottom: 36px;
 }
 
 article h3 {
-  font-size: 18px;
-  margin: 36px 0 12px;
-  padding-left: 10px;
-  border-left: 3px solid #b45309;
+  font-size: 19px;
+  font-weight: 600;
+  color: #1e3b5f;
+  margin: 40px 0 14px;
+  padding-left: 12px;
+  border-left: 3px solid #2563eb;
 }
 
 article p {
-  margin-bottom: 16px;
-  text-align: justify;
+  margin-bottom: 18px;
 }
 
 article ul, article ol {
-  margin: 12px 0 20px 24px;
+  margin: 14px 0 22px 26px;
+  color: #3a3f47;
 }
 
 article li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
+article strong {
+  color: #1e3b5f;
+}
+
+/* ===== 代码块 ===== */
 pre {
-  background: #2d2d2d;
-  color: #f8f8f2;
-  padding: 20px 24px;
-  border-radius: 8px;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  padding: 22px 26px;
+  border-radius: 10px;
   overflow-x: auto;
   font-size: 14px;
-  line-height: 1.7;
-  margin: 16px 0 24px;
+  line-height: 1.75;
+  margin: 18px 0 28px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 code {
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+  font-family: "Cascadia Code", "SF Mono", "Fira Code", "JetBrains Mono",
+    Consolas, "Courier New", monospace;
   font-size: 14px;
 }
 
 p code, li code {
-  background: #f0ece4;
-  padding: 2px 6px;
-  border-radius: 3px;
+  background: #e8ecf1;
+  color: #2563eb;
+  padding: 2px 7px;
+  border-radius: 4px;
   font-size: 13px;
-  color: #b45309;
+  font-weight: 500;
 }
 
 /* ===== 表格 ===== */
 .compare-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 16px 0 24px;
+  margin: 18px 0 28px;
   font-size: 14px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .compare-table th, .compare-table td {
-  padding: 10px 14px;
-  border: 1px solid #ddd;
+  padding: 11px 16px;
+  border: 1px solid #e5e7eb;
   text-align: left;
 }
 
 .compare-table th {
-  background: #f5f2ea;
+  background: #f1f5f9;
+  color: #1e3b5f;
   font-weight: 600;
 }
 
 .compare-table tr:nth-child(even) td {
-  background: #fdfcf9;
+  background: #f8fafc;
 }
 
 /* ===== 返回链接 ===== */
 .back-link {
   display: inline-block;
-  margin-bottom: 32px;
-  color: #b45309;
+  margin: 20px 20px 0;
+  padding: 8px 16px;
+  color: #2563eb;
   text-decoration: none;
   font-size: 14px;
+  font-weight: 500;
+  border-radius: 20px;
+  transition: background 0.2s ease;
 }
 
 .back-link:hover {
-  text-decoration: underline;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 /* ===== 页脚 ===== */
 footer {
   text-align: center;
-  margin-top: 60px;
-  padding-top: 24px;
-  border-top: 1px solid #e8e4dc;
+  padding: 28px 20px 40px;
   font-size: 13px;
-  color: #bbb;
+  color: #a8aeb5;
 }
 
 /* ===== 移动端 ===== */
-@media (max-width: 480px) {
-  body {
-    padding: 16px 16px 48px;
-  }
-
+@media (max-width: 520px) {
   header {
-    padding: 28px 0 24px;
+    padding: 32px 16px 30px;
   }
 
   header h1 {
     font-size: 24px;
+    letter-spacing: 1px;
+  }
+
+  main {
+    padding: 20px 14px 32px;
+  }
+
+  .note-list {
+    gap: 10px;
+  }
+
+  .note-list a {
+    padding: 16px 18px;
   }
 
   .note-list a {
     flex-direction: column;
-    padding: 14px 4px;
   }
 
   .note-date {
@@ -202,12 +261,31 @@ footer {
     margin-top: 4px;
   }
 
+  article {
+    padding: 0 14px 32px;
+  }
+
   article h2 {
-    font-size: 21px;
+    font-size: 22px;
+  }
+
+  article h3 {
+    font-size: 17px;
+    margin: 30px 0 10px;
   }
 
   pre {
-    padding: 14px 16px;
+    padding: 16px 18px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .back-link {
+    margin: 14px 14px 0;
+  }
+
+  .compare-table th, .compare-table td {
+    padding: 8px 10px;
     font-size: 13px;
   }
 }
