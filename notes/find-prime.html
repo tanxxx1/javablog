@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>如何快速找出素数 - Java 学习笔记</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <a href="../index.html" class="back-link">← 返回笔记列表</a>
+
+  <article>
+    <h2>如何快速找出素数</h2>
+    <p class="article-date">2026-05-09</p>
+
+    <h3>什么是素数</h3>
+    <p>
+      <strong>素数</strong>（质数）是指在大于 1 的自然数中，只能被 1 和它本身整除的数。
+      例如：2, 3, 5, 7, 11, 13, 17, 19 ...<br>
+      如果一个数能被分解成两个更小的数的乘积，它就是<strong>合数</strong>。1 既不是素数也不是合数。
+    </p>
+
+    <h3>朴素方法（试除法）</h3>
+    <p>最直观的思路：对每个数 n，尝试用 2 到 √n 之间的所有数去除它。</p>
+    <pre><code>// 判断一个数是不是素数
+public static boolean isPrime(int n) {
+    if (n < 2) return false;
+    for (int i = 2; i * i <= n; i++) {
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+
+// 找出 1 ~ n 范围内的所有素数
+public static List&lt;Integer&gt; findPrimes(int n) {
+    List&lt;Integer&gt; list = new ArrayList&lt;&gt;();
+    for (int i = 2; i <= n; i++) {
+        if (isPrime(i)) list.add(i);
+    }
+    return list;
+}</code></pre>
+    <p>这个方式在 n 比较小的时候没问题，但 n 一大就慢了。找 1~10 万 需要判断每个数，时间复杂度是 <strong>O(n√n)</strong>。</p>
+
+    <h3>埃拉托斯特尼筛法（Sieve of Eratosthenes）</h3>
+    <p>
+      这是一种古老而优雅的算法，大约公元前 240 年由古希腊数学家提出。
+      核心思想只有一句话：<strong>从 2 开始，把每个素数的所有倍数都划掉，剩下的就是素数。</strong>
+    </p>
+
+    <p>算法图解（以 n = 30 为例）：</p>
+    <ol>
+      <li>列出 2 到 30 的所有数。</li>
+      <li>2 是素数 → 把 4,6,8,10…（2 的倍数）全部划掉。</li>
+      <li>下一个没被划掉的数是 3 → 它是素数 → 划掉 6,9,12…（3 的倍数）。</li>
+      <li>下一个没被划掉的数是 5 → 它是素数 → 划掉 10,15,20…（5 的倍数）。</li>
+      <li>重复，直到 √n = √30 ≈ 5.5，即处理完 5 之后就可以停了。</li>
+    </ol>
+
+    <h3>Java 实现</h3>
+    <pre><code>public static List&lt;Integer&gt; sieveOfEratosthenes(int n) {
+    // isPrime[i] = true 表示 i 目前还没被划掉
+    boolean[] isPrime = new boolean[n + 1];
+    Arrays.fill(isPrime, true);
+    isPrime[0] = isPrime[1] = false;  // 0 和 1 不是素数
+
+    for (int i = 2; i * i <= n; i++) {
+        if (isPrime[i]) {
+            // 把 i 的所有倍数标记为合数
+            // 从 i*i 开始，因为更小的倍数已经被处理过
+            for (int j = i * i; j <= n; j += i) {
+                isPrime[j] = false;
+            }
+        }
+    }
+
+    // 收集结果
+    List&lt;Integer&gt; primes = new ArrayList&lt;&gt;();
+    for (int i = 2; i <= n; i++) {
+        if (isPrime[i]) primes.add(i);
+    }
+    return primes;
+}</code></pre>
+
+    <h3>为什么筛法这么快</h3>
+    <p>跟朴素方法对比一下：</p>
+    <table class="compare-table">
+      <tr><th>方法</th><th>时间复杂度</th><th>找 100 万以内素数</th></tr>
+      <tr><td>试除法（朴素）</td><td>O(n√n) ≈ 10⁹ 次运算</td><td>数秒到十几秒</td></tr>
+      <tr><td>埃拉托斯特尼筛法</td><td>O(n log log n) ≈ 2×10⁷ 次运算</td><td>几十毫秒</td></tr>
+    </table>
+
+    <p>筛法快的三个原因：</p>
+    <ol>
+      <li><strong>内层循环从 i² 开始</strong>：当 i=5 时，10, 15, 20 已经被 2 和 3 处理过了，直接从 25 开始即可。</li>
+      <li><strong>只需遍历到 √n</strong>：任何合数 n 必然有一个因子 ≤ √n，所以外层循环到 √n 就足够了（<code>i * i &lt;= n</code>）。</li>
+      <li><strong>bool 数组操作极快</strong>：标记一个位置为 false 只是 O(1) 的数组访问，CPU 缓存非常友好。</li>
+    </ol>
+
+    <p>多亏了 <code>log log n</code> 这个因子的缓慢增长，即使 n 达到一亿，筛法也能在 1 秒内完成。</p>
+
+    <h3>小结</h3>
+    <p>
+      埃拉托斯特尼筛法用「空间换时间」的思路，用 O(n) 的 bool 数组换来了 O(n log log n) 的高效筛选。
+      遇到需要批量找素数的场景，优先用筛法；只在判断单个数时，才用试除法。
+    </p>
+  </article>
+
+  <footer>
+    <p>认真敲好每一行代码 ✌️</p>
+  </footer>
+</body>
+</html>

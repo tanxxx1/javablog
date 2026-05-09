@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java 枚举（Enum）的应用场景 - Java 学习笔记</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <a href="../index.html" class="back-link">← 返回笔记列表</a>
+
+  <article>
+    <h2>Java 枚举（Enum）的应用场景</h2>
+    <p class="article-date">2026-05-09</p>
+
+    <h3>什么是枚举</h3>
+    <p>
+      枚举（<code>enum</code>）是 Java 中一种特殊的类，用来定义一组<strong>固定不变</strong>的常量。
+      Java 的枚举比普通常量强大得多——它不只是一个数字或字符串的别名，而是真正意义上的<strong>类型安全</strong>对象。
+    </p>
+
+    <h3>基本用法</h3>
+    <p>定义一个表示星期的枚举：</p>
+    <pre><code>public enum Day {
+    MONDAY, TUESDAY, WEDNESDAY,
+    THURSDAY, FRIDAY, SATURDAY, SUNDAY
+}</code></pre>
+
+    <p>枚举的使用方式非常直观：</p>
+    <pre><code>Day today = Day.MONDAY;
+System.out.println(today);           // 输出: MONDAY
+
+// 遍历所有枚举值
+for (Day d : Day.values()) {
+    System.out.println(d.name() + " 序号: " + d.ordinal());
+}
+// 输出:
+// MONDAY 序号: 0
+// TUESDAY 序号: 1
+// ... 以此类推</code></pre>
+
+    <p>枚举可以带属性和方法，比普通常量灵活很多：</p>
+    <pre><code>public enum Day {
+    MONDAY("星期一"),
+    TUESDAY("星期二"),
+    WEDNESDAY("星期三"),
+    THURSDAY("星期四"),
+    FRIDAY("星期五"),
+    SATURDAY("星期六"),
+    SUNDAY("星期日");
+
+    private final String chineseName;
+
+    Day(String chineseName) {
+        this.chineseName = chineseName;
+    }
+
+    public String getChineseName() {
+        return chineseName;
+    }
+}
+
+// 使用
+System.out.println(Day.FRIDAY.getChineseName());  // 输出: 星期五</code></pre>
+
+    <h3>配合 switch 使用</h3>
+    <p>枚举和 <code>switch</code> 是天作之合，代码清晰又安全：</p>
+    <pre><code>Day today = Day.SUNDAY;
+
+switch (today) {
+    case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY ->
+        System.out.println("工作日，认真敲代码！");
+    case SATURDAY, SUNDAY ->
+        System.out.println("周末，复习笔记！");
+}</code></pre>
+
+    <p>Java 14 之后的箭头语法（<code>-></code>）可以省略 <code>break</code>，避免漏写 <code>break</code> 导致的穿透 bug。</p>
+
+    <h3>为什么枚举比 static final 常量更安全</h3>
+    <p>先看传统做法的问题：</p>
+    <pre><code>// 传统方式：使用 static final
+public class Season {
+    public static final int SPRING = 0;
+    public static final int SUMMER = 1;
+    public static final int AUTUMN = 2;
+    public static final int WINTER = 3;
+}
+
+// 问题1：类型不匹配不报错
+int season = Season.SPRING;
+if (season == 100) {       // 编译器不会阻止，bare int
+    // 这段代码能通过编译，但逻辑上是错误的
+}
+
+// 问题2：方法参数没有约束
+public void printWeather(int season) {
+    // 调用者可以传任意整数，比如 printWeather(999)
+    // 编译器完全不把关
+}</code></pre>
+
+    <p>换成枚举之后，类型安全由编译器保证：</p>
+    <pre><code>public enum Season {
+    SPRING, SUMMER, AUTUMN, WINTER
+}
+
+// 类型安全
+public void printWeather(Season season) {
+    switch (season) {
+        case SPRING -> System.out.println("春暖花开");
+        case SUMMER -> System.out.println("夏日炎炎");
+        case AUTUMN -> System.out.println("秋高气爽");
+        case WINTER -> System.out.println("冬日暖阳");
+    }
+}
+
+// 调用时只能传 Season 枚举值
+printWeather(Season.SPRING);   // ✅ 正确
+// printWeather(100);          // ❌ 编译直接报错！</code></pre>
+
+    <p>枚举 vs static final 的对比总结：</p>
+    <table class="compare-table">
+      <tr><th>特性</th><th>static final 常量</th><th>enum 枚举</th></tr>
+      <tr><td>类型检查</td><td>无（就是普通 int/String）</td><td>强类型，编译期检查</td></tr>
+      <tr><td>可读性</td><td>差（一堆数字/字符串）</td><td>好（有意义的名称）</td></tr>
+      <tr><td>防止传错值</td><td>不能</td><td>编译期阻止</td></tr>
+      <tr><td>自带方法</td><td>无</td><td>values() / name() / ordinal() 等</td></tr>
+      <tr><td>switch 友好</td><td>一般</td><td>原生支持，IDE 自动补全</td></tr>
+      <tr><td>可带属性和行为</td><td>不能</td><td>可以定义字段和方法</td></tr>
+    </table>
+
+    <h3>小结</h3>
+    <p>
+      当你的代码中需要一组固定的选项（比如状态、类型、方向、模式），优先使用枚举。
+      它不只是「花里胡哨的常量」，而是让编译器帮你拦住 bug 的利器。
+    </p>
+  </article>
+
+  <footer>
+    <p>认真敲好每一行代码 ✌️</p>
+  </footer>
+</body>
+</html>
