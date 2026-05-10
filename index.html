@@ -13,21 +13,32 @@
     <p class="subtitle">记录每一行代码的成长</p>
   </header>
 
+  <div class="filter-section">
+    <input type="text" class="search-box" placeholder="搜索笔记标题...">
+    <div class="tag-filters">
+      <button class="tag-btn active" data-filter="全部">全部</button>
+      <button class="tag-btn" data-filter="Java">Java</button>
+      <button class="tag-btn" data-filter="算法">算法</button>
+      <button class="tag-btn" data-filter="基础">基础</button>
+      <button class="tag-btn" data-filter="进阶">进阶</button>
+    </div>
+  </div>
+
   <main>
     <ul class="note-list">
-      <li>
+      <li data-tags="Java,算法">
         <a href="notes/find-prime.html">
           <span class="note-title">如何快速找出素数</span>
           <span class="note-date">2026-05-09</span>
         </a>
       </li>
-      <li>
+      <li data-tags="Java,进阶">
         <a href="notes/java-enum.html">
           <span class="note-title">Java 枚举（Enum）的应用场景</span>
           <span class="note-date">2026-05-09</span>
         </a>
       </li>
-      <li>
+      <li data-tags="Java,基础">
         <a href="notes/hello-world.html">
           <span class="note-title">Java 第一课：Hello World</span>
           <span class="note-date">2026-05-09</span>
@@ -39,5 +50,45 @@
   <footer>
     <p>认真敲好每一行代码 ✌️</p>
   </footer>
+
+  <script>
+    (function () {
+      const searchBox = document.querySelector('.search-box');
+      const tagBtns = document.querySelectorAll('.tag-btn');
+      const noteItems = document.querySelectorAll('.note-list li');
+
+      let activeTag = '全部';
+
+      function filterNotes() {
+        const query = searchBox.value.trim().toLowerCase();
+
+        noteItems.forEach(function (li) {
+          const title = li.querySelector('.note-title').textContent.toLowerCase();
+          const tags = li.getAttribute('data-tags') || '';
+          const tagsArr = tags.split(',').map(function (t) { return t.trim(); });
+
+          const matchTag = activeTag === '全部' || tagsArr.indexOf(activeTag) !== -1;
+          const matchSearch = query === '' || title.indexOf(query) !== -1;
+
+          if (matchTag && matchSearch) {
+            li.style.display = '';
+          } else {
+            li.style.display = 'none';
+          }
+        });
+      }
+
+      searchBox.addEventListener('input', filterNotes);
+
+      tagBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          tagBtns.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          activeTag = btn.getAttribute('data-filter');
+          filterNotes();
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
