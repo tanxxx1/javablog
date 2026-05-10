@@ -115,6 +115,29 @@ header {
   text-align: center;
 }
 
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.avatar:hover {
+  transform: scale(1.08) rotate(5deg);
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+}
+
 header h1 {
   font-size: 38px;
   font-weight: 800;
@@ -122,7 +145,7 @@ header h1 {
   background: var(--gradient-text);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   text-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
 }
 
@@ -131,6 +154,30 @@ header h1 {
   color: var(--text-secondary);
   font-weight: 400;
   letter-spacing: 1px;
+}
+
+.contact-email {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 8px 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+.contact-email:hover {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--text-primary);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
 }
 
 /* ===== 筛选区 ===== */
