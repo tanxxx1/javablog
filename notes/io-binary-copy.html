@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java IO 流之任意文件复制 - Java 学习笔记</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">🌞</button>
+  <div class="top-bar"></div>
+  <header>
+    <h1>☕ 谭礼嘉的 Java 学习笔记</h1>
+    <p class="subtitle">记录每一行代码的成长</p>
+  </header>
+  <a href="../index.html" class="back-link">← 返回笔记列表</a>
+
+  <article>
+    <h2>Java IO 流之任意文件复制：字节缓冲流万能复制方案</h2>
+    <p class="article-date">2026-05-23</p>
+    <div class="article-tags">
+      <span class="tag">Java</span>
+      <span class="tag">进阶</span>
+    </div>
+
+    <h3>引言：文本流搞不定的场景</h3>
+    <p>
+      上一篇我们讲了如何用 <code>BufferedReader</code> / <code>BufferedWriter</code> 复制文本文件。
+      但现实世界不只有 .txt 和 .java——你还需要处理<strong>图片、MP3 音乐、MP4 视频、PDF 文档、ZIP 压缩包、class 字节码</strong>……
+      如果你拿字符流去读一个 .png 图片，结果一定是<strong>文件损坏</strong>。
+    </p>
+    <p>
+      本篇文章将带你掌握 Java 中处理任意类型文件的"<strong>万能复制方案</strong>"——<code>BufferedInputStream</code> + <code>BufferedOutputStream</code>（字节缓冲流）。
+    </p>
+
+    <h3>一、为什么字符流不能用来复制图片？</h3>
+    <p>先来看一个关键问题：<strong>字节和字符的区别</strong>。</p>
+    <table class="compare-table">
+      <tr><th></th><th>字节（byte）</th><th>字符（char）</th></tr>
+      <tr><td>大小</td><td>8 位（1 字节）</td><td>16 位（2 字节）</td></tr>
+      <tr><td>范围</td><td>0 ~ 255</td><td>0 ~ 65535（Unicode）</td></tr>
+      <tr><td>本质</td><td>计算机存储的原始数据</td><td>字节按编码规则"翻译"后的符号</td></tr>
+    </table>
+    <p>
+      当字符流读取文件时，它会<strong>按编码规则将字节翻译成字符</strong>。比如读取一个 .txt 文件，字符流知道"连续两个字节 0xB0 0xA1 在 GBK 下对应汉字 '啊'"。
+    </p>
+    <p>但图片文件没有"编码"这个概念——它的每一个字节都是像素数据的一部分，强行"翻译"只会破坏原始数据：</p>
+    <pre><code>// ❌ 错误示范：用字符流复制图片会导致文件损坏！
+// 原因：图片是二进制数据，不是字符，不能用 Reader/Writer 处理
+FileReader reader = new FileReader("photo.png");   // 会把图片数据当文本"翻译"，毁掉原始字节
+FileWriter writer = new FileWriter("copy.png");
+// 复制出来的图片大概率打不开！</code></pre>
+
+    <h3>二、字节缓冲流：万能复制方案</h3>
+    <p>
+      字节流（<code>InputStream</code> / <code>OutputStream</code>）以<strong>byte</strong>为单位操作，不对数据做任何"翻译"——
+      原封不动地把字节从源头搬到目标。这就是它之所以"万能"的根本原因。
+    </p>
+    <p>同样，加上缓冲能大幅提升效率：</p>
+    <pre><code>// 结构对比：装饰器模式一脉相承
+// 字符缓冲流：  BufferedReader( FileReader(文件) )
+// 字节缓冲流：  BufferedInputStream( FileInputStream(文件) )
+//
+// 结构完全对称，只是"Reader"换成"InputStream"而已</code></pre>
+
+    <h3>三、核心方法速览</h3>
+    <pre><code>// BufferedInputStream 常用方法
+int b = input.read();                   // 读一个字节，返回 0~255，文件末尾返回 -1
+int len = input.read(byte[] buf);       // 读一批字节到数组，返回实际读取的字节数
+
+// BufferedOutputStream 常用方法
+output.write(int b);                    // 写一个字节
+output.write(byte[] buf, 0, len);       // 写入字节数组的一部分
+output.flush();                         // 强制刷出缓冲区
+output.close();                         // 关闭流（自动 flush）</code></pre>
+
+    <h3>四、代码实战：复制任意文件</h3>
+    <p>下面是一个完整可运行的示例，演示如何复制一张图片（换成视频、压缩包等任意文件同理）：</p>
+    <pre><code>import java.io.*;
+
+/**
+ * 任意文件复制 —— 使用 BufferedInputStream + BufferedOutputStream
+ * 功能：将 pic.jpg 复制为 pic_copy.jpg（图片、视频、压缩包等任意文件均可）
+ */
+public class BinaryFileCopy {
+    public static void main(String[] args) {
+        // 源文件路径和目标文件路径（请根据实际情况修改）
+        String sourcePath = "pic.jpg";
+        String targetPath = "pic_copy.jpg";
+
+        // 记录开始时间，用来测速
+        long startTime = System.currentTimeMillis();
+
+        try (
+            // 第一层：FileInputStream —— 建立到源文件的字节连接
+            FileInputStream fis = new FileInputStream(sourcePath);
+            // 第二层：BufferedInputStream —— 套上缓冲，一次读一块
+            BufferedInputStream input = new BufferedInputStream(fis);
+
+            // 写出端同理
+            FileOutputStream fos = new FileOutputStream(targetPath);
+            BufferedOutputStream output = new BufferedOutputStream(fos);
+        ) {
+            // 申请一个缓冲区数组，大小为 8192 字节（8KB）
+            // 这是 IO 编程中的经典做法：自己管理缓冲区配合 BufferedXxx 使用，效果更佳
+            byte[] buffer = new byte[8192];
+            int bytesRead;          // 每次实际读取到的字节数
+            long totalBytes = 0;    // 累计已复制的字节数
+
+            // read(buffer) 返回本次读取到的字节数，文件末尾返回 -1
+            while ((bytesRead = input.read(buffer)) != -1) {
+                // write(buffer, 0, bytesRead) 只写入实际读取的部分
+                // ⚠️ 注意：不要写成 write(buffer)，那样可能会把上一次的残留数据也写进去！
+                output.write(buffer, 0, bytesRead);
+                totalBytes += bytesRead;
+
+                // 每复制 10MB 打印一次进度（方便观察大文件复制的进度）
+                if (totalBytes % (10 * 1024 * 1024) < 8192) {
+                    System.out.printf("已复制：%.2f MB%n", totalBytes / (1024.0 * 1024.0));
+                }
+            }
+
+            // 确保所有缓冲数据写入磁盘
+            output.flush();
+
+            long endTime = System.currentTimeMillis();
+            double timeSeconds = (endTime - startTime) / 1000.0;
+            double fileSizeMB = totalBytes / (1024.0 * 1024.0);
+
+            System.out.println("========== 复制完成 ==========");
+            System.out.printf("文件大小：%.2f MB%n", fileSizeMB);
+            System.out.printf("总耗时：%.2f 秒%n", timeSeconds);
+            System.out.printf("平均速度：%.2f MB/s%n", fileSizeMB / timeSeconds);
+
+        } catch (FileNotFoundException e) {
+            System.out.println("找不到文件：" + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("读写出错：" + e.getMessage());
+        }
+    }
+}</code></pre>
+
+    <p>运行结果示例：</p>
+    <pre><code>已复制：10.00 MB
+已复制：20.00 MB
+========== 复制完成 ==========
+文件大小：25.34 MB
+总耗时：0.32 秒
+平均速度：79.19 MB/s</code></pre>
+
+    <h3>五、逐行解读：关键细节</h3>
+
+    <h3>5.1 为什么自己还要定义一个 byte[] 缓冲区？</h3>
+    <p>这个问题很常见。</p>
+    <pre><code>// BufferedInputStream 内部已经有缓冲区了，为什么还要自己定义？
+byte[] buffer = new byte[8192];
+input.read(buffer);</code></pre>
+    <p>
+      原因在于：<strong>一次调用 read(byte[]) 读一批 vs 循环调用 read() 读一个字节</strong>。
+      虽然 <code>BufferedInputStream</code> 内部有缓冲区来减少磁盘 IO，
+      但如果你用无参的 <code>read()</code>，每次只读一个字节，效率仍然不高。
+      用 <code>read(byte[])</code> 一次读一批，可以直接从内部缓冲区批量拷贝数据，<strong>进一步减少方法调用次数</strong>。
+    </p>
+    <p>这是 IO 编程的最佳实践：<strong>缓冲流 + 自己管理的 byte[] 缓冲区 = 双重加速</strong>。</p>
+
+    <h3>5.2 为什么是 write(buffer, 0, bytesRead) 而不是 write(buffer)？</h3>
+    <pre><code>while ((bytesRead = input.read(buffer)) != -1) {
+    output.write(buffer, 0, bytesRead);   // ✅ 正确：只写实际读到的部分
+    // output.write(buffer);              // ❌ 错误：可能写入上次残留数据！
+}</code></pre>
+    <p>
+      假设缓冲区大小是 8192，文件大小是 10000 字节。第一次 <code>read</code> 读满 8192，第二次 <code>read</code> 只读到 1808 字节。
+      如果直接 <code>write(buffer)</code>，会把 8192 字节全部写出去——其中包括上次读的残留数据。
+      所以必须用 <code>write(buffer, 0, bytesRead)</code>，精确写入"本次实际读取到的字节数"。
+    </p>
+    <p>这是新手最容易踩的坑之一，<strong>千万注意</strong>。</p>
+
+    <h3>六、字节流 vs 字符流：一图看懂怎么选</h3>
+    <table class="compare-table">
+      <tr><th>对比维度</th><th>字节缓冲流</th><th>字符缓冲流</th></tr>
+      <tr><td>核心类</td><td>BufferedInputStream / BufferedOutputStream</td><td>BufferedReader / BufferedWriter</td></tr>
+      <tr><td>处理单位</td><td>byte（8 位）</td><td>char（16 位）</td></tr>
+      <tr><td>是否做编码转换</td><td>否，原封不动</td><td>是，字节→字符映射</td></tr>
+      <tr><td>适用文件类型</td><td>所有文件（万能）</td><td>仅纯文本文件</td></tr>
+      <tr><td>便捷方法</td><td>read(byte[])</td><td>readLine()（按行读，超实用）</td></tr>
+      <tr><td>典型场景</td><td>图片、视频、音频、压缩包、PDF</td><td>.txt、.java、.html、.json、.xml、.csv</td></tr>
+      <tr><td>中文乱码风险</td><td>无（不翻译，保留原字节）</td><td>有（编解码不匹配会乱码）</td></tr>
+    </table>
+    <p><strong>一句话总结：</strong>如果你确定文件内容全是文本，用字符流（方便，有 readLine()）；如果不确定文件类型，或者就是要复制图片/视频等二进制文件，用字节流。</p>
+
+    <h3>七、实战练习：复制一个 ZIP 压缩包</h3>
+    <p>
+      把上面的代码中的文件路径改成压缩包，试一试：
+    </p>
+    <pre><code>// 只需修改这两个路径，其余代码完全不变
+String sourcePath = "project.zip";
+String targetPath = "project_backup.zip";
+// 程序照常运行，完美复制 ✅</code></pre>
+    <p>
+      这就是字节流的"万能"之处——无论文件内容是什么，字节流都只是忠实地搬运字节，<strong>不关心、不解读、不破坏</strong>。
+    </p>
+
+    <h3>总结</h3>
+    <ul>
+      <li><strong>字节流</strong>（InputStream/OutputStream）以 byte 为单位，不对数据做任何转换，是复制<strong>任意类型文件</strong>的唯一正确选择。</li>
+      <li><strong>缓冲流</strong>（BufferedInputStream/BufferedOutputStream）通过内部缓冲区大幅减少磁盘 IO 次数，性能远超非缓冲版本。</li>
+      <li><strong>结合自定义 byte[] 缓冲区</strong>使用 read(byte[]) / write(byte[], 0, len)，实现双重加速。</li>
+      <li>记住关键写法：<code>read(buffer)</code> → <code>write(buffer, 0, bytesRead)</code>，不要漏掉偏移量和长度。</li>
+      <li><strong>万能公式：</strong>用字节缓冲流读 → 用字节缓冲流写 = 任意文件复制，稳如泰山。</li>
+    </ul>
+    <p>
+      掌握了字符流和字节流，Java IO 的基础就算扎实了。下一篇我们会进入更实用的领域——用匿名内部类优雅地封装代码执行时间测速。
+    </p>
+  </article>
+
+  <footer>
+    <p>认真敲好每一行代码 ✌️</p>
+  </footer>
+  <button class="back-to-top" id="back-to-top" aria-label="Back to Top">⬆</button>
+  <script src="notes.js"></script>
+</body>
+</html>

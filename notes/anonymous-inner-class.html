@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Java 匿名内部类的实战应用 - Java 学习笔记</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">🌞</button>
+  <div class="top-bar"></div>
+  <header>
+    <h1>☕ 谭礼嘉的 Java 学习笔记</h1>
+    <p class="subtitle">记录每一行代码的成长</p>
+  </header>
+  <a href="../index.html" class="back-link">← 返回笔记列表</a>
+
+  <article>
+    <h2>Java 匿名内部类的实战应用</h2>
+    <p class="article-date">2026-05-23</p>
+    <div class="article-tags">
+      <span class="tag">Java</span>
+      <span class="tag">进阶</span>
+    </div>
+
+    <h3>引言：一个非常实际的痛点</h3>
+    <p>
+      设想一个场景：你写了一段代码，想知道它执行了多长时间。比如一个排序算法、一次数据库查询、一段复杂的业务逻辑。
+      最直接的做法是——在代码前后各记录一次时间，然后相减：
+    </p>
+    <pre><code>// 方法 1：设断点看时间（麻烦、不精确）
+// 方法 2：
+long start = System.currentTimeMillis();
+doSomething();               // 要测速的代码
+long end = System.currentTimeMillis();
+System.out.println("耗时：" + (end - start) + " 毫秒");</code></pre>
+    <p>看起来还行？但如果要测速的代码有 <strong>10 处、20 处</strong>呢？每处都写一遍 start/end/println，代码会变得又丑又重复。</p>
+    <p>
+      本文将通过"代码计时器"这个实际需求，带你理解<strong>匿名内部类</strong>的精髓——它如何像"回调函数"一样，帮你把重复的<strong>模板代码</strong>优雅地封装起来。
+    </p>
+
+    <h3>一、什么是匿名内部类？</h3>
+    <p>
+      先看一句话定义：<strong>匿名内部类是"没有名字、在创建对象的同时定义其行为"的类</strong>。
+    </p>
+    <p>传统的做法是：先定义类 → 再创建对象 → 最后调用方法。三个步骤，分开进行：</p>
+    <pre><code>// 传统方式：步骤分离
+class MyRunnable implements Runnable {       // 步骤1：定义类（还得单独开个 .java 文件）
+    @Override
+    public void run() {
+        System.out.println("Hello");
+    }
+}
+
+Runnable r = new MyRunnable();               // 步骤2：创建对象
+new Thread(r).start();                       // 步骤3：使用</code></pre>
+
+    <p>匿名内部类把<strong>定义 + 创建合二为一</strong>，当场写完当场用：</p>
+    <pre><code>// 匿名内部类方式：一步到位
+Runnable r = new Runnable() {                // 直接在创建对象的同时定义 run() 的行为
+    @Override
+    public void run() {
+        System.out.println("Hello");
+    }
+};
+new Thread(r).start();
+
+// 甚至可以更简洁地内联：
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        System.out.println("Hello");
+    }
+}).start();</code></pre>
+    <p>
+      关键点：<code>new Runnable() { ... }</code> 并不是在创建接口的对象（接口不能 new），
+      而是创建了一个<strong>实现了该接口的、没有名字的类</strong>的实例。这就是"匿名内部类"名称的由来。
+    </p>
+
+    <h3>二、设计思路：把计时逻辑抽象出来</h3>
+    <p>回到计时器的需求。我们想要的效果是这样的：</p>
+    <pre><code>// 理想中的调用方式：
+Timer.measure(() -> {
+    // 要测速的代码直接放这里
+    doSomething();
+});
+// 控制台自动输出：执行耗时：xxx 毫秒</code></pre>
+
+    <p>为了实现这个效果，我们需要三步走：</p>
+    <ol>
+      <li>定义一个<strong>接口</strong>，里面就一个方法（代表"要执行的任务"）</li>
+      <li>写一个<strong>工具类</strong>，负责记录时间 + 执行任务 + 输出耗时</li>
+      <li>调用时，用<strong>匿名内部类</strong>当场传入要执行的任务</li>
+    </ol>
+
+    <h3>三、代码实战：完整实现</h3>
+    <p>第 1 步：定义一个接口 —— 只规定"做什么"，不规定"怎么做"。</p>
+    <pre><code>/**
+ * 可执行任务的接口
+ * 任何想被"计时"的代码块，都应该实现这个接口
+ */
+public interface Task {
+    /**
+     * 执行任务的具体逻辑（由调用方自由定义）
+     */
+    void execute();
+}</code></pre>
+
+    <p>第 2 步：写计时工具类 —— 封装"计时"的通用逻辑。</p>
+    <pre><code>/**
+ * 代码计时工具类
+ * 职责：测量任意 Task 的执行时间
+ */
+public class Timer {
+
+    /**
+     * 测量并执行一个任务，输出耗时
+     * @param taskName  任务名称（用于打印）
+     * @param task      要执行的任务（接口类型，面向接口编程）
+     */
+    public static void measure(String taskName, Task task) {
+        long startTime = System.currentTimeMillis();   // 记录开始时间
+
+        task.execute();                                 // 执行真正的业务逻辑
+
+        long endTime = System.currentTimeMillis();      // 记录结束时间
+        long elapsed = endTime - startTime;             // 计算耗时
+
+        System.out.printf("[%s] 执行耗时：%d 毫秒 (%.2f 秒)%n",
+                taskName, elapsed, elapsed / 1000.0);
+    }
+}</code></pre>
+
+    <p>第 3 步：调用方 —— 用匿名内部类传入具体任务。</p>
+    <pre><code>/**
+ * 主程序：演示如何使用 Timer + 匿名内部类
+ */
+public class TimerDemo {
+    public static void main(String[] args) {
+
+        // 测试 1：测量一段简单计算的耗时
+        Timer.measure("计算 1 到 100 万的和", new Task() {
+            @Override
+            public void execute() {
+                long sum = 0;
+                for (int i = 1; i <= 1_000_000; i++) {
+                    sum += i;
+                }
+                System.out.println("求和结果：" + sum);
+            }
+        });
+
+        // 测试 2：测量字符串拼接的耗时（对比 StringBuilder）
+        Timer.measure("String 直接拼接 5 万次", new Task() {
+            @Override
+            public void execute() {
+                String result = "";
+                for (int i = 0; i < 50_000; i++) {
+                    result += "a";                      // ⚠️ 每次循环都创建新 String 对象，很慢
+                }
+                System.out.println("拼接完成，字符串长度：" + result.length());
+            }
+        });
+
+        // 测试 3：测量字符串拼接（高效版本）
+        Timer.measure("StringBuilder 拼接 5 万次", new Task() {
+            @Override
+            public void execute() {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < 50_000; i++) {
+                    sb.append("a");                     // ✅ StringBuilder 是可变的，没有额外对象创建
+                }
+                System.out.println("拼接完成，字符串长度：" + sb.length());
+            }
+        });
+    }
+}</code></pre>
+
+    <p>运行结果：</p>
+    <pre><code>求和结果：500000500000
+[计算 1 到 100 万的和] 执行耗时：4 毫秒 (0.00 秒)
+拼接完成，字符串长度：50000
+[String 直接拼接 5 万次] 执行耗时：783 毫秒 (0.78 秒)
+拼接完成，字符串长度：50000
+[StringBuilder 拼接 5 万次] 执行耗时：2 毫秒 (0.00 秒)</code></pre>
+
+    <p>完美！从结果中可以直观看到 <code>String</code> 直接拼接和 <code>StringBuilder</code> 之间的<strong>巨大性能差距</strong>——这正是代码计时器的价值。</p>
+
+    <h3>四、核心设计思想拆解</h3>
+
+    <h3>4.1 面向接口编程：Task 是关键</h3>
+    <p>
+      <code>Timer.measure()</code> 只认识 <code>Task</code> 接口，不依赖任何具体的实现类。
+      这样一来，<strong>任何</strong>实现了 <code>Task</code> 接口的代码块都能被计时——无论是排序、文件读写、网络请求、还是数学计算。
+    </p>
+    <pre><code>// Timer 工具类对具体业务"一无所知"，但能计时任何业务 ✅
+// 这就是"面向接口编程"的威力：解耦
+
+// 测排序
+Timer.measure("冒泡排序 10000 个数", new Task() {
+    @Override
+    public void execute() { bubbleSort(arr); }
+});
+
+// 测文件读写
+Timer.measure("复制大文件", new Task() {
+    @Override
+    public void execute() { copyFile(src, dest); }
+});
+
+// 测网络请求
+Timer.measure("请求 API 接口", new Task() {
+    @Override
+    public void execute() { httpGet(url); }
+});</code></pre>
+
+    <h3>4.2 模板方法模式的味道</h3>
+    <p>
+      <code>Timer.measure()</code> 其实隐含了<strong>模板方法模式</strong>（Template Method Pattern）的思想：
+      计时的骨架（记录开始 → 执行 → 记录结束 → 输出）是固定的，但中间"执行什么"由调用方决定。
+      固定的部分封装在 <code>measure()</code> 里，变化的部分通过 <code>Task</code> 接口留给调用方填充。
+    </p>
+
+    <h3>4.3 匿名内部类 vs Lambda 表达式</h3>
+    <p>
+      如果你用的是 Java 8+，上面的匿名内部类写法可以简化为 <strong>Lambda 表达式</strong>。因为 <code>Task</code> 接口只有一个抽象方法（这叫<strong>函数式接口</strong>），Lambda 完全等价：
+    </p>
+    <pre><code>// 匿名内部类写法（Java 1.1+）
+Timer.measure("测试", new Task() {
+    @Override
+    public void execute() {
+        doSomething();
+    }
+});
+
+// Lambda 表达式写法（Java 8+，更简洁，效果完全一样）
+Timer.measure("测试", () -> {
+    doSomething();
+});
+
+// 如果只有一行代码，还可以更短：
+Timer.measure("测试", () -> doSomething());</code></pre>
+
+    <p>
+      但理解匿名内部类是必要的——<strong>Lambda 本质上就是匿名内部类的语法糖</strong>。
+      而且在实际项目中，你仍然会遇到大量老代码使用匿名内部类写法。
+      更重要的是，如果接口有<strong>多个抽象方法</strong>，Lambda 用不了，还是得回到匿名内部类。
+    </p>
+
+    <h3>五、进阶：带参数的 Task 接口</h3>
+    <p>
+      上面的 <code>Task</code> 接口不接收参数也不返回值。实际开发中可能需要更灵活的版本。
+      下面是两个常用的变体：
+    </p>
+    <pre><code>// 变体 1：有返回值的任务
+public interface TaskWithResult&lt;T&gt; {
+    T execute();    // 返回泛型结果
+}
+
+// 变体 2：接收参数的任务
+public interface TaskWithParam&lt;T, R&gt; {
+    R execute(T input);    // 接收 T 类型参数，返回 R 类型结果
+}</code></pre>
+
+    <p>使用示例：</p>
+    <pre><code>// 有返回值的计时
+public static &lt;T&gt; T measureWithResult(String taskName, TaskWithResult&lt;T&gt; task) {
+    long startTime = System.currentTimeMillis();
+    T result = task.execute();
+    long endTime = System.currentTimeMillis();
+    System.out.printf("[%s] 执行耗时：%d 毫秒%n", taskName, endTime - startTime);
+    return result;   // 把结果还回去！
+}
+
+// 调用
+int total = Timer.measureWithResult("计算 1 到 100 的和", new TaskWithResult&lt;Integer&gt;() {
+    @Override
+    public Integer execute() {
+        int sum = 0;
+        for (int i = 1; i <= 100; i++) sum += i;
+        return sum;
+    }
+});
+System.out.println("结果是：" + total);   // 结果是：5050</code></pre>
+
+    <h3>总结</h3>
+    <p>本文从一个非常实际的需求出发，带你体验了匿名内部类的设计思路：</p>
+    <ul>
+      <li><strong>为什么需要</strong>：避免为每个"一次性"的实现单独建类，减少代码膨胀。</li>
+      <li><strong>核心语法</strong>：<code>new 接口名() { 实现方法 }</code> —— 在创建对象的同时定义行为。</li>
+      <li><strong>经典应用场景</strong>：回调函数、计时器、事件监听、线程任务、比较器（Comparator）等。</li>
+      <li><strong>设计思想</strong>：面向接口编程 + 模板方法模式，把"固定逻辑"和"可变逻辑"分离。</li>
+      <li><strong>与 Lambda 的关系</strong>：Lambda 是匿名内部类的简化版，但只适用于函数式接口（单抽象方法）。</li>
+    </ul>
+    <p>
+      理解匿名内部类不仅是掌握一个语法点，更是理解 Java 中<strong>"代码即数据"</strong>（把一段代码作为参数传递）的编程思想。
+      这种思想在后续学习集合排序、多线程、GUI 事件处理时都会频繁出现。
+    </p>
+  </article>
+
+  <footer>
+    <p>认真敲好每一行代码 ✌️</p>
+  </footer>
+  <button class="back-to-top" id="back-to-top" aria-label="Back to Top">⬆</button>
+  <script src="notes.js"></script>
+</body>
+</html>
