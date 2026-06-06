@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>了解 Java 反射机制 - Java 学习笔记</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">🌞</button>
+  <div class="top-bar"></div>
+  <header>
+    <h1>☕ 谭礼嘉的 Java 学习笔记</h1>
+    <p class="subtitle">记录每一行代码的成长</p>
+  </header>
+  <a href="../index.html" class="back-link">← 返回笔记列表</a>
+
+  <article>
+    <h2>了解 Java 反射机制</h2>
+    <p class="article-date">2026-06-06</p>
+    <div class="article-tags">
+      <span class="tag">Java</span>
+      <span class="tag">进阶</span>
+    </div>
+
+    <h3>什么是反射</h3>
+    <p>
+      反射（Reflection）是 Java 提供的一种<strong>在运行时动态获取类信息并操作类成员</strong>的能力。
+      正常情况下，我们在编译期就确定了要使用哪些类、哪些方法。而反射允许程序在运行时才去"探查"一个类的结构——
+      它的字段、构造方法、普通方法，甚至可以动态创建对象和调用方法。
+    </p>
+    <p>
+      简单来说：编译时不知道要用哪个类，运行时才决定——这就是反射的用武之地。
+    </p>
+
+    <h3>获取 Class 对象的三种方式</h3>
+    <p>反射的起点是拿到一个类的 <code>Class</code> 对象，有三种常见方式：</p>
+    <pre><code>// 方式1：通过类名.class（编译时就确定）
+Class&lt;String&gt; clazz1 = String.class;
+
+// 方式2：通过对象.getClass()（运行时已有实例）
+String str = "hello";
+Class&lt;?&gt; clazz2 = str.getClass();
+
+// 方式3：通过全限定类名的字符串（最灵活，框架常用）
+Class&lt;?&gt; clazz3 = Class.forName("java.lang.String");
+
+System.out.println(clazz1 == clazz2);  // true
+System.out.println(clazz2 == clazz3);  // true
+// 三种方式拿到的是同一个 Class 对象</code></pre>
+    <p>
+      三种方式中，<code>Class.forName()</code> 最为灵活，也是各种框架（Spring、MyBatis 等）的核心手段——
+      只要知道类的全路径字符串，就能在运行时加载它。
+    </p>
+
+    <h3>获取类的基本信息</h3>
+    <p>拿到 <code>Class</code> 对象后，可以"解剖"这个类的结构：</p>
+    <pre><code>Class&lt;?&gt; clazz = Class.forName("java.lang.String");
+
+// 获取类名
+System.out.println(clazz.getName());        // java.lang.String
+System.out.println(clazz.getSimpleName());  // String
+System.out.println(clazz.getPackageName()); // java.lang
+
+// 获取所有公开的构造方法
+Constructor&lt;?&gt;[] constructors = clazz.getConstructors();
+for (Constructor&lt;?&gt; c : constructors) {
+    System.out.println("构造方法: " + c);
+}
+
+// 获取所有公开的方法（包括继承的）
+Method[] methods = clazz.getMethods();
+for (Method m : methods) {
+    System.out.println("方法: " + m.getName());
+}
+
+// 获取所有公开的字段
+Field[] fields = clazz.getFields();
+for (Field f : fields) {
+    System.out.println("字段: " + f.getName());
+}</code></pre>
+
+    <h3>动态创建对象</h3>
+    <p>反射可以在运行时实例化一个对象，即使编译时完全不知道这个类：</p>
+    <pre><code>// 传统方式：编译时必须知道类名
+String s1 = new String("hello");
+
+// 反射方式：运行时才确定类名
+Class&lt;?&gt; clazz = Class.forName("java.lang.String");
+Object s2 = clazz.getConstructor(String.class).newInstance("hello");
+
+System.out.println(s2);  // 输出: hello</code></pre>
+    <p>
+      注意 <code>newInstance()</code> 返回的是 <code>Object</code>，如果需要调用具体方法，需要向下转型。
+    </p>
+
+    <h3>动态调用方法</h3>
+    <p>这是反射最实用的能力之一——运行时动态调用方法：</p>
+    <pre><code>Class&lt;?&gt; clazz = Class.forName("java.lang.String");
+Object obj = clazz.getConstructor(String.class).newInstance("Hello World");
+
+// 获取 length() 方法并调用
+Method lengthMethod = clazz.getMethod("length");
+int len = (int) lengthMethod.invoke(obj);
+System.out.println("字符串长度: " + len);  // 输出: 11
+
+// 获取 substring(int, int) 方法并调用
+Method subMethod = clazz.getMethod("substring", int.class, int.class);
+String sub = (String) subMethod.invoke(obj, 0, 5);
+System.out.println("截取结果: " + sub);    // 输出: Hello</code></pre>
+    <p>
+      <code>invoke()</code> 的第一个参数是调用方法的对象实例，后续参数是方法的实参。
+    </p>
+
+    <h3>访问和修改字段</h3>
+    <p>反射可以突破 <code>private</code> 的限制，直接读写对象的私有字段：</p>
+    <pre><code>public class Person {
+    private String name;
+    private int age;
+
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+}
+
+// 通过反射访问私有字段
+Person p = new Person("张三", 25);
+Class&lt;?&gt; clazz = p.getClass();
+
+// getDeclaredField 可以获取私有字段（getField 只能获取 public）
+Field nameField = clazz.getDeclaredField("name");
+nameField.setAccessible(true);  // 关键！解除 private 访问限制
+
+String name = (String) nameField.get(p);
+System.out.println("原始名字: " + name);   // 输出: 张三
+
+// 修改私有字段
+nameField.set(p, "李四");
+System.out.println("修改后: " + p.getName());  // 注意：getName() 不存在，但字段确实改了
+System.out.println("反射读取: " + nameField.get(p));  // 输出: 李四</code></pre>
+    <p>
+      <code>setAccessible(true)</code> 是"暴力反射"的关键，它绕过了 Java 的访问控制检查。
+      这在框架中非常常见，但在业务代码中应谨慎使用。
+    </p>
+
+    <h3>反射的实际应用场景</h3>
+    <p>反射不是"炫技"，它是很多框架的基石：</p>
+    <table class="compare-table">
+      <tr><th>场景</th><th>说明</th></tr>
+      <tr><td>Spring IOC 容器</td><td>根据配置文件/注解，反射创建和注入 Bean</td></tr>
+      <tr><td>MyBatis ORM</td><td>将数据库查询结果通过反射映射到 Java 对象</td></tr>
+      <tr><td>JUnit 单元测试</td><td>反射调用被 <code>@Test</code> 标注的方法</td></tr>
+      <tr><td>序列化框架</td><td>JSON/XML 与 Java 对象的互转（如 Jackson、Gson）</td></tr>
+      <tr><td>JDBC 驱动加载</td><td><code>Class.forName("com.mysql.cj.jdbc.Driver")</code></td></tr>
+    </table>
+
+    <h3>反射的优缺点</h3>
+    <p>反射是一把双刃剑，需要了解它的利与弊：</p>
+    <table class="compare-table">
+      <tr><th>优点</th><th>缺点</th></tr>
+      <tr><td>极大的灵活性，运行时动态操作</td><td>性能开销大，比直接调用慢很多</td></tr>
+      <tr><td>可以访问 private 成员</td><td>破坏封装性，绕过访问控制</td></tr>
+      <tr><td>是框架设计的基础能力</td><td>编译期无法检查类型安全，容易出运行时异常</td></tr>
+      <tr><td>支持动态代理等高级特性</td><td>代码可读性降低，调试困难</td></tr>
+    </table>
+
+    <h3>小结</h3>
+    <p>
+      反射是 Java 最强大的特性之一，也是理解框架底层原理的钥匙。
+      学习反射的核心就三步：<strong>拿到 Class 对象 → 解剖类结构 → 动态操作成员</strong>。
+      虽然日常业务代码中不常直接使用反射，但理解它能帮你读懂 Spring、MyBatis 等框架的源码，
+      也能在需要编写通用工具类时派上大用场。
+    </p>
+  </article>
+
+  <footer>
+    <p>认真敲好每一行代码 ✌️</p>
+  </footer>
+  <button class="back-to-top" id="back-to-top" aria-label="Back to Top">⬆</button>
+  <script src="notes.js"></script>
+</body>
+</html>
