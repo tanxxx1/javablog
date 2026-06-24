@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thread 子类 vs Runnable 接口创建线程的区别 - Java 学习笔记</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Theme">🌞</button>
+  <div class="top-bar"></div>
+  <header>
+    <h1>☕ 谭礼嘉的 Java 学习笔记</h1>
+    <p class="subtitle">记录每一行代码的成长</p>
+  </header>
+  <a href="../index.html" class="back-link">← 返回笔记列表</a>
+
+  <article>
+    <h2>Thread 子类 vs Runnable 接口创建线程的区别</h2>
+    <p class="article-date">2026-06-24</p>
+    <div class="article-tags">
+      <span class="tag">Java</span>
+      <span class="tag">进阶</span>
+    </div>
+
+    <h3>引言：两种创建线程的方式</h3>
+    <p>
+      学习 Java 多线程时，你一定见过两种创建线程的写法：<strong>继承 Thread 类</strong> 和 <strong>实现 Runnable 接口</strong>。
+      很多初学者会觉得"效果一样，随便用哪个都行"，但实际上它们在设计思想、扩展性、资源共享等方面有本质区别。
+      本文将从实际代码出发，帮你彻底搞清楚两者的差异，以及什么时候该用哪个。
+    </p>
+
+    <h3>一、两种方式的基本写法</h3>
+
+    <h3>方式一：继承 Thread 类</h3>
+    <p>通过创建 Thread 的子类，重写 <code>run()</code> 方法来定义线程要执行的任务：</p>
+    <pre><code>/**
+ * 方式一：继承 Thread 类
+ */
+class MyThread extends Thread {
+    private String taskName;
+
+    public MyThread(String taskName) {
+        this.taskName = taskName;
+    }
+
+    @Override
+    public void run() {
+        for (int i = 1; i <= 5; i++) {
+            System.out.println(taskName + " 执行第 " + i + " 次 —— 线程：" + getName());
+        }
+    }
+}
+
+public class ThreadDemo {
+    public static void main(String[] args) {
+        MyThread t1 = new MyThread("任务A");
+        MyThread t2 = new MyThread("任务B");
+        t1.start();
+        t2.start();
+    }
+}</code></pre>
+
+    <h3>方式二：实现 Runnable 接口</h3>
+    <p>定义一个实现 <code>Runnable</code> 接口的类，然后把它传给 Thread 的构造方法：</p>
+    <pre><code>/**
+ * 方式二：实现 Runnable 接口
+ */
+class MyRunnable implements Runnable {
+    private String taskName;
+
+    public MyRunnable(String taskName) {
+        this.taskName = taskName;
+    }
+
+    @Override
+    public void run() {
+        for (int i = 1; i <= 5; i++) {
+            System.out.println(taskName + " 执行第 " + i + " 次 —— 线程：" + Thread.currentThread().getName());
+        }
+    }
+}
+
+public class RunnableDemo {
+    public static void main(String[] args) {
+        Thread t1 = new Thread(new MyRunnable("任务A"), "线程-1");
+        Thread t2 = new Thread(new MyRunnable("任务B"), "线程-2");
+        t1.start();
+        t2.start();
+    }
+}</code></pre>
+
+    <p>两种方式都能正常创建线程、并发执行任务。那区别到底在哪？</p>
+
+    <h3>二、核心区别对比</h3>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>对比维度</th>
+          <th>继承 Thread 类</th>
+          <th>实现 Runnable 接口</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Java 继承限制</strong></td>
+          <td>只能单继承，占用了唯一的继承名额</td>
+          <td>可以同时实现多个接口，灵活无限制</td>
+        </tr>
+        <tr>
+          <td><strong>资源共享</strong></td>
+          <td>每个子类实例有独立的成员变量，共享资源不方便</td>
+          <td>同一个 Runnable 实例可传给多个 Thread，天然支持资源共享</td>
+        </tr>
+        <tr>
+          <td><strong>职责分离</strong></td>
+          <td>任务逻辑和线程机制耦合在一个类中</td>
+          <td>任务（Runnable）和线程（Thread）解耦，符合单一职责</td>
+        </tr>
+        <tr>
+          <td><strong>线程池兼容</strong></td>
+          <td>不能直接提交给 ExecutorService</td>
+          <td>可以直接提交给线程池，天然兼容</td>
+        </tr>
+        <tr>
+          <td><strong>扩展性</strong></td>
+          <td>继承后无法再继承其他类</td>
+          <td>实现 Runnable 后仍可继承其他类</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>三、区别一：Java 单继承的限制</h3>
+    <p>
+      这是最根本的区别。Java 只支持<strong>单继承</strong>，如果你的类已经继承了 Thread，就无法再继承其他任何类。
+    </p>
+    <pre><code>// 继承 Thread 的问题：
+class MyThread extends Thread {  // 已经继承了 Thread
+    // 如果我还想继承别的类？不行！
+    // class MyThread extends SomeOtherClass ← 编译错误！
+}
+
+// 实现 Runnable 就没这个问题：
+class MyTask implements Runnable {  // 实现接口，不影响继承
+    // 仍然可以继承其他类
+}
+
+class MyTask extends SomeBaseClass implements Runnable {  // ✅ 完全合法
+    @Override
+    public void run() {
+        // 线程任务逻辑
+    }
+}</code></pre>
+    <p>
+      在实际项目中，你的业务类往往需要继承某个框架的基类（比如 Servlet、Activity 等），
+      这时候用 Runnable 接口是唯一的选择。
+    </p>
+
+    <h3>四、区别二：资源共享能力</h3>
+    <p>
+      这是多线程编程中最常遇到的实际问题。假设我们有一个<strong>卖票系统</strong>，多个窗口同时卖票：
+    </p>
+
+    <p><strong>用 Thread 子类（每个线程各自持有票数，无法共享）：</strong></p>
+    <pre><code>// ⚠️ 有问题的写法：每个线程有自己的 tickets，各卖各的
+class TicketThread extends Thread {
+    private int tickets = 10;   // 每个实例各持有 10 张票
+
+    @Override
+    public void run() {
+        while (tickets > 0) {
+            System.out.println(getName() + " 卖出第 " + tickets-- + " 张票");
+        }
+    }
+}
+
+public class BadTicketDemo {
+    public static void main(String[] args) {
+        // 三个窗口各卖各的 10 张，总共卖了 30 张——不是我们要的效果！
+        new TicketThread().start();
+        new TicketThread().start();
+        new TicketThread().start();
+    }
+}</code></pre>
+
+    <p><strong>用 Runnable 接口（多个线程共享同一个 Runnable 实例）：</strong></p>
+    <pre><code>// ✅ 正确的写法：多个线程共享同一个 Runnable 对象的票数
+class TicketRunnable implements Runnable {
+    private int tickets = 10;   // 只有一份票数，被所有线程共享
+
+    @Override
+    public void run() {
+        while (true) {
+            if (tickets <= 0) break;
+            System.out.println(Thread.currentThread().getName() + " 卖出第 " + tickets-- + " 张票");
+        }
+    }
+}
+
+public class GoodTicketDemo {
+    public static void main(String[] args) {
+        Runnable task = new TicketRunnable();  // 创建一个任务对象
+
+        // 三个线程共享同一个 task，共同操作同一份 tickets
+        new Thread(task, "窗口-1").start();
+        new Thread(task, "窗口-2").start();
+        new Thread(task, "窗口-3").start();
+    }
+}</code></pre>
+    <p>
+      关键点：<code>Runnable task = new TicketRunnable()</code> 只创建了一个对象，
+      然后把这个对象传给三个 Thread。三个线程执行的是同一个 <code>task.run()</code>，
+      访问的是同一个 <code>tickets</code> 变量，这才是真正的资源共享。
+    </p>
+
+    <h3>五、区别三：职责分离的设计思想</h3>
+    <p>
+      从面向对象设计的角度看，Runnable 体现的是<strong>"组合优于继承"</strong>的设计原则：
+    </p>
+    <ul>
+      <li><strong>Thread</strong>：负责线程的创建、调度、生命周期管理（线程机制）</li>
+      <li><strong>Runnable</strong>：负责定义具体的任务逻辑（业务逻辑）</li>
+    </ul>
+    <pre><code>// 继承方式：一个类既管"怎么做线程"又管"做什么任务"——职责混合
+class MyThread extends Thread {
+    @Override
+    public void run() {
+        // 业务逻辑 和 线程机制 耦合在一起
+    }
+}
+
+// 接口方式：各司其职
+class DownloadTask implements Runnable {       // 只关心"做什么"——下载文件
+    @Override
+    public void run() {
+        downloadFile(url);
+    }
+}
+
+// Thread 只关心"怎么做"——创建线程、启动、调度
+Thread t = new Thread(new DownloadTask(), "下载线程");
+t.start();</code></pre>
+    <p>
+      这种分离让代码更灵活：同一个 <code>DownloadTask</code> 可以交给 Thread 执行，
+      也可以交给线程池执行，还可以在不需要线程时直接调用 <code>run()</code> 做单元测试。
+    </p>
+
+    <h3>六、区别四：线程池兼容性</h3>
+    <p>
+      在实际开发中，我们几乎<strong>不会直接 new Thread</strong>，而是使用<strong>线程池</strong>（ExecutorService）来管理线程。
+      线程池的 <code>submit()</code> 和 <code>execute()</code> 方法接受的是 <code>Runnable</code> 或 <code>Callable</code>，而不是 Thread 子类：
+    </p>
+    <pre><code>import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ThreadPoolDemo {
+    public static void main(String[] args) {
+        ExecutorService pool = Executors.newFixedThreadPool(3);
+
+        // ✅ Runnable 可以直接提交给线程池
+        pool.submit(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("任务1：" + Thread.currentThread().getName());
+            }
+        });
+
+        // ✅ Lambda 更简洁（Runnable 是函数式接口）
+        pool.submit(() -> {
+            System.out.println("任务2：" + Thread.currentThread().getName());
+        });
+
+        // ❌ Thread 子类不能直接提交（它不是 Runnable 的直接实现）
+        // pool.submit(new MyThread());  // 虽然 Thread 实现了 Runnable，但这是滥用
+
+        pool.shutdown();
+    }
+}</code></pre>
+    <p>
+      虽然 Thread 类本身也实现了 Runnable 接口，但把 Thread 对象提交给线程池是<strong>反模式</strong>——
+      线程池自己管理线程的创建和销毁，你提交的应该只是"任务"，而不是"线程"。
+    </p>
+
+    <h3>七、实际开发中的最佳实践</h3>
+    <p>记住一条黄金法则：</p>
+    <blockquote style="padding: 20px 24px; border-left: 4px solid #6366f1; background: rgba(99,102,241,0.08); border-radius: 0 12px 12px 0; margin: 24px 0;">
+      <strong>优先使用 Runnable 接口（或 Lambda），不要继承 Thread。</strong>
+    </blockquote>
+    <p>理由汇总：</p>
+    <ol>
+      <li>不占用单继承名额，保留类的扩展能力</li>
+      <li>天然支持资源共享（多个线程执行同一个 Runnable）</li>
+      <li>任务逻辑和线程机制解耦，代码更清晰</li>
+      <li>兼容线程池（ExecutorService），这是生产环境的标准用法</li>
+      <li>Java 8 之后可以用 Lambda 简化，写起来比继承更简洁</li>
+    </ol>
+    <pre><code>// 现代 Java 推荐写法：Lambda + 线程池
+ExecutorService pool = Executors.newFixedThreadPool(4);
+
+pool.submit(() -> {
+    System.out.println("简洁又优雅");
+});
+
+pool.shutdown();</code></pre>
+
+    <h3>八、常见疑问：Thread 子类就一无是处吗？</h3>
+    <p>也不是。在以下少数场景中，继承 Thread 也有其合理性：</p>
+    <ul>
+      <li><strong>需要重写 Thread 的其他方法</strong>：比如自定义 <code>interrupt()</code> 行为、修改线程名称生成逻辑等。</li>
+      <li><strong>线程本身需要携带复杂状态</strong>：线程对象本身就是业务实体（比如自定义的 Worker 线程，有自己的生命周期管理方法）。</li>
+      <li><strong>学习和理解原理</strong>：继承 Thread 是理解多线程的第一步，有助于掌握线程的本质。</li>
+    </ul>
+    <pre><code>// 合理使用 Thread 子类的例子：自定义线程行为
+class DaemonWorker extends Thread {
+    private volatile boolean running = true;
+
+    public DaemonWorker(String name) {
+        super(name);
+        setDaemon(true);   // 设为守护线程
+    }
+
+    public void stopWorker() {
+        running = false;
+    }
+
+    @Override
+    public void run() {
+        while (running) {
+            System.out.println(getName() + " 正在执行后台任务...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+        System.out.println(getName() + " 已停止");
+    }
+}</code></pre>
+
+    <h3>总结</h3>
+    <p>一句话总结两种方式的本质区别：</p>
+    <ul>
+      <li><strong>继承 Thread</strong>："我就是线程" —— 任务逻辑和线程身份绑死。</li>
+      <li><strong>实现 Runnable</strong>："我可以在线程里跑" —— 任务逻辑独立于线程，灵活组合。</li>
+    </ul>
+    <p>
+      在 99% 的实际开发场景中，<strong>Runnable（或 Lambda）+ 线程池</strong> 是正确答案。
+      继承 Thread 更适合学习阶段理解原理，以及少数需要深度定制线程行为的场景。
+      掌握这个区别，是写出高质量多线程代码的第一步。
+    </p>
+  </article>
+
+  <footer>
+    <p>认真敲好每一行代码 ✌️</p>
+  </footer>
+  <button class="back-to-top" id="back-to-top" aria-label="Back to Top">⬆</button>
+  <script src="notes.js"></script>
+</body>
+</html>
