@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(javac -encoding UTF-8 ArithmeticQuizApp.java)",
+      "Bash(javac -encoding UTF-8 MineSweeperGame.java)"
+    ]
+  }
+}

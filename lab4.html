@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lab4：Java Swing 图形用户界面实验合集</title>
+    <script src="https://cjrtnc.leaningtech.com/3.0/loader.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-2: #a78bfa;
+            --success: #34d399;
+            --tab-active-bg: #1e3a5f;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* ---- background decoration ---- */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 60%, rgba(167, 139, 250, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ---- header ---- */
+        .header {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 48px 24px 20px;
+        }
+        .header h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        .header .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            font-weight: 400;
+        }
+        .header .badge-row {
+            margin-top: 14px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .header .badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            border: 1px solid var(--border);
+            background: rgba(30, 41, 59, 0.7);
+            color: var(--text-muted);
+        }
+
+        /* ---- main container ---- */
+        .main {
+            position: relative;
+            z-index: 1;
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        /* ---- tabs ---- */
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            border-radius: 14px 14px 0 0;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 14px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            background: var(--card-bg);
+            color: var(--text-muted);
+            transition: all 0.25s;
+            position: relative;
+            font-family: inherit;
+            letter-spacing: 0.02em;
+        }
+        .tab-btn:first-child { border-right: 1px solid var(--border); }
+        .tab-btn.active {
+            background: var(--tab-active-bg);
+            color: #fff;
+            box-shadow: inset 0 -3px 0 var(--accent);
+        }
+        .tab-btn:hover:not(.active) {
+            background: #263348;
+            color: #cbd5e1;
+        }
+        .tab-btn .icon { margin-right: 6px; }
+
+        /* ---- tab content ---- */
+        .tab-panel {
+            display: none;
+            background: var(--card-bg);
+            border-radius: 0 0 14px 14px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ---- app header / info strip ---- */
+        .app-info {
+            padding: 20px 24px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .app-info h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .app-info .highlights {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .app-info .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        /* ---- display area ---- */
+        .display-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 16px 20px;
+            min-height: 370px;
+            background: #0b1120;
+        }
+        #quiz-display,
+        #mine-display {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 32px rgba(56, 189, 248, 0.08);
+        }
+
+        /* ---- loading overlay ---- */
+        .loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            min-height: 350px;
+        }
+        .loading-overlay .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ---- footer ---- */
+        .footer {
+            text-align: center;
+            padding: 10px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            position: relative;
+            z-index: 1;
+        }
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .footer a:hover { text-decoration: underline; }
+
+        /* ---- responsive ---- */
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.6rem; }
+            .tab-btn { font-size: 0.82rem; padding: 12px 10px; }
+            .main { padding: 0 10px 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <h1>lab4：Java Swing 图形用户界面实验合集</h1>
+    <p class="subtitle">在浏览器中直接运行 Java Swing 程序 — 免安装 · 免配置 · 即点即用</p>
+    <div class="badge-row">
+        <span class="badge">🧪 CheerpJ 3.0</span>
+        <span class="badge">☕ Java Swing</span>
+        <span class="badge">🖥️ HTML5 Canvas</span>
+        <span class="badge">⚡ WebAssembly</span>
+    </div>
+</header>
+
+<main class="main">
+
+    <!-- ====== Tab Bar ====== -->
+    <div class="tab-bar">
+        <button class="tab-btn active" id="tab-btn-quiz" onclick="switchTab('quiz')">
+            <span class="icon">🧮</span> 实验1：小学生算术测试
+        </button>
+        <button class="tab-btn" id="tab-btn-mine" onclick="switchTab('mine')">
+            <span class="icon">💣</span> 实验2：经典扫雷游戏
+        </button>
+    </div>
+
+    <!-- ====== Panel 1: Arithmetic Quiz ====== -->
+    <div class="tab-panel active" id="panel-quiz">
+        <div class="app-info">
+            <h2>🧮 实验1 — 小学生算术通 · 趣味测试</h2>
+            <div class="highlights">
+                <span class="tag">三档难度自适应</span>
+                <span class="tag">ActionEvent 事件驱动</span>
+                <span class="tag">GridBagLayout 布局</span>
+                <span class="tag">防负数 / 防除不尽</span>
+                <span class="tag">实时计分反馈</span>
+            </div>
+        </div>
+        <div class="display-wrapper" id="wrapper-quiz">
+            <div class="loading-overlay" id="loader-quiz">
+                <div class="spinner"></div>
+                <span>正在加载 Java 运行时 &amp; 算术程序…</span>
+            </div>
+            <div id="quiz-display"></div>
+        </div>
+    </div>
+
+    <!-- ====== Panel 2: Mine Sweeper ====== -->
+    <div class="tab-panel" id="panel-mine">
+        <div class="app-info">
+            <h2>💣 实验2 — 高级经典扫雷</h2>
+            <div class="highlights">
+                <span class="tag">双难度 (9×9 / 16×16)</span>
+                <span class="tag">MouseAdapter 鼠标左右键</span>
+                <span class="tag">递归级联翻开</span>
+                <span class="tag">二进制序列化存档</span>
+                <span class="tag">Timer 实时计时</span>
+                <span class="tag">首击安全保证</span>
+            </div>
+        </div>
+        <div class="display-wrapper" id="wrapper-mine">
+            <div class="loading-overlay" id="loader-mine">
+                <div class="spinner"></div>
+                <span>正在加载扫雷游戏…</span>
+            </div>
+            <div id="mine-display"></div>
+        </div>
+    </div>
+
+</main>
+
+<footer class="footer">
+    <p>
+        Powered by <a href="https://leaningtech.com/cheerpj/" target="_blank" rel="noopener">CheerpJ 3.0</a>
+        — 将 Java 字节码编译为 WebAssembly，在浏览器中原生运行 Swing GUI |
+        <a href="https://github.com/tanxxx1/javablog" target="_blank" rel="noopener">GitHub</a>
+    </p>
+</footer>
+
+<script>
+(async function () {
+    /* ---- state ---- */
+    let cjReady = false;
+    const loaded = { quiz: false, mine: false };
+
+    /* ---- helpers ---- */
+    const $ = (id) => document.getElementById(id);
+
+    async function ensureInit() {
+        if (cjReady) return;
+        console.log('[lab4] Initializing CheerpJ 3.0 runtime…');
+        await cheerpjInit({
+            // Map virtual /app/ → current directory, so CheerpJ finds JARs
+            // via HTTP relative to this page (works under /javablog/ or locally)
+            preloadResources: { '/app/': './' },
+        });
+        cjReady = true;
+        console.log('[lab4] CheerpJ runtime ready.');
+    }
+
+    async function loadQuiz() {
+        if (loaded.quiz) return;
+        await ensureInit();
+        console.log('[lab4] Creating display for ArithmeticQuizApp…');
+        await cheerpjCreateDisplay($('quiz-display'), 450, 350);
+        $('loader-quiz').style.display = 'none';
+        $('quiz-display').style.display = 'block';
+        console.log('[lab4] Running ArithmeticQuizApp…');
+        // Run without await so it runs in background (Swing EDT never exits)
+        cheerpjRunMain('ArithmeticQuizApp', '/app/arithmetic_quiz.jar');
+        loaded.quiz = true;
+    }
+
+    async function loadMine() {
+        if (loaded.mine) return;
+        await ensureInit();
+        console.log('[lab4] Creating display for MineSweeperGame…');
+        // 550×590 gives enough room for 16×16 hard mode plus control panel
+        await cheerpjCreateDisplay($('mine-display'), 550, 590);
+        $('loader-mine').style.display = 'none';
+        $('mine-display').style.display = 'block';
+        console.log('[lab4] Running MineSweeperGame…');
+        cheerpjRunMain('MineSweeperGame', '/app/minesweeper.jar');
+        loaded.mine = true;
+    }
+
+    /* ---- tab switching ---- */
+    window.switchTab = async function (name) {
+        if (name === 'quiz') {
+            $('panel-quiz').classList.add('active');
+            $('panel-mine').classList.remove('active');
+            $('tab-btn-quiz').classList.add('active');
+            $('tab-btn-mine').classList.remove('active');
+            await loadQuiz();
+        } else {
+            $('panel-quiz').classList.remove('active');
+            $('panel-mine').classList.add('active');
+            $('tab-btn-quiz').classList.remove('active');
+            $('tab-btn-mine').classList.add('active');
+            await loadMine();
+        }
+    };
+
+    /* ---- eager-load the first tab ---- */
+    await loadQuiz();
+})();
+</script>
+
+</body>
+</html>
