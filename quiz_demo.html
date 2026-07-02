@@ -1,142 +1,75 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>实验1：小学生算术测试 · 在线体验</title>
-    <script src="https://cjrtnc.leaningtech.com/3.0/loader.js"></script>
-    <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --border: #334155;
-            --text: #e2e8f0;
-            --muted: #94a3b8;
-            --accent: #38bdf8;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(ellipse at 30% 30%, rgba(56,189,248,0.07), transparent 60%);
-            pointer-events: none;
-        }
-        .container {
-            position: relative;
-            z-index: 1;
-            background: var(--card);
-            border-radius: 16px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-            overflow: hidden;
-            max-width: 520px;
-            width: 95%;
-        }
-        .header {
-            padding: 20px 24px 0;
-        }
-        .header h1 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #fff;
-        }
-        .header .tags {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-        .header .tag {
-            font-size: 0.72rem;
-            padding: 2px 10px;
-            border-radius: 999px;
-            background: rgba(56,189,248,0.1);
-            color: var(--accent);
-            border: 1px solid rgba(56,189,248,0.2);
-        }
-        .display-area {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 12px 16px 20px;
-            min-height: 360px;
-            background: #0b1120;
-        }
-        #cheerpj-display {
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 0 24px rgba(56,189,248,0.06);
-        }
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            color: var(--muted);
-            font-size: 0.9rem;
-            min-height: 350px;
-            justify-content: center;
-        }
-        .spinner {
-            width: 36px; height: 36px;
-            border: 3px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .footer {
-            text-align: center;
-            padding: 12px;
-            font-size: 0.78rem;
-            color: var(--muted);
-        }
-        .footer a { color: var(--accent); text-decoration: none; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>实验1：小学生算术测试 · 在线体验</title>
+<script src="https://cjrtnc.leaningtech.com/3.0/loader.js"></script>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --border:#334155; --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 30%,rgba(56,189,248,.07),transparent 60%);pointer-events:none}
+.container{position:relative;z-index:1;background:var(--card);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.5);max-width:520px;width:95%;overflow:hidden}
+.header{padding:24px 24px 0}
+.header h1{font-size:1.35rem;font-weight:700;color:#fff}
+.header .tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.header .tag{font-size:.72rem;padding:2px 10px;border-radius:999px;background:rgba(56,189,248,.1);color:var(--accent);border:1px solid rgba(56,189,248,.2)}
+.display-area{display:flex;justify-content:center;align-items:center;padding:16px 20px 24px;min-height:370px;background:#0b1120}
+#display{border-radius:8px;overflow:hidden;box-shadow:0 0 24px rgba(56,189,248,.06)}
+#spinner{display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--muted);font-size:.92rem}
+.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+#error{display:none;text-align:center;color:#f87171;padding:40px 20px;font-size:.92rem;line-height:1.8}
+.footer{text-align:center;padding:12px;font-size:.78rem;color:var(--muted);border-top:1px solid var(--border)}
+.footer a{color:var(--accent);text-decoration:none}
+</style>
 </head>
 <body>
-
 <div class="container">
-    <div class="header">
-        <h1>🧮 实验1：小学生算术测试</h1>
-        <div class="tags">
-            <span class="tag">三档难度</span>
-            <span class="tag">ActionEvent</span>
-            <span class="tag">GridBagLayout</span>
-            <span class="tag">实时计分</span>
-        </div>
-    </div>
-    <div class="display-area">
-        <div class="loading" id="loader">
-            <div class="spinner"></div>
-            <span>正在加载 Java 运行时 &amp; 算术程序…</span>
-        </div>
-        <div id="cheerpj-display"></div>
-    </div>
-    <div class="footer">
-        <a href="lab4_post.md">← 返回实验报告</a> &nbsp;|&nbsp;
-        Powered by <a href="https://leaningtech.com/cheerpj/" target="_blank">CheerpJ 3.0</a>
-    </div>
+<div class="header">
+<h1>🧮 实验1：小学生算术测试</h1>
+<div class="tags">
+<span class="tag">三档难度</span><span class="tag">ActionEvent</span><span class="tag">GridBagLayout</span><span class="tag">实时计分</span>
 </div>
-
+</div>
+<div class="display-area">
+<div id="spinner"><div class="spin"></div><span>正在加载 Java 运行时…</span></div>
+<div id="error"><p>⚠️ 加载失败</p><p id="errMsg"></p></div>
+<div id="display"></div>
+</div>
+<div class="footer">
+<a href="lab4_post.md">← 返回实验报告</a> &nbsp;|&nbsp;
+Powered by <a href="https://leaningtech.com/cheerpj/" target="_blank">CheerpJ 3.0</a>
+</div>
+</div>
 <script>
-(async () => {
-    await cheerpjInit({ preloadResources: { '/app/': './' } });
-    await cheerpjCreateDisplay(document.getElementById('cheerpj-display'), 450, 350);
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('cheerpj-display').style.display = 'block';
-    cheerpjRunMain('ArithmeticQuizApp', '/app/arithmetic_quiz.jar');
-})();
+async function initApp() {
+    try {
+        console.log('[quiz] Initializing CheerpJ…');
+        await cheerpjInit({
+            preloadResources: { '/app/': './' }
+        });
+        console.log('[quiz] CheerpJ ready, creating display…');
+
+        const displayEl = document.getElementById('display');
+        await cheerpjCreateDisplay(displayEl, 450, 350);
+        console.log('[quiz] Display created, launching ArithmeticQuizApp…');
+
+        document.getElementById('spinner').style.display = 'none';
+        displayEl.style.display = 'block';
+
+        // 不 await——Swing EDT 永不返回
+        cheerpjRunMain('ArithmeticQuizApp', '/app/arithmetic_quiz.jar');
+        console.log('[quiz] App launched.');
+    } catch (e) {
+        console.error('[quiz] Failed:', e);
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('errMsg').textContent = e.message || String(e);
+    }
+}
+window.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
