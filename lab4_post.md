@@ -228,11 +228,11 @@ private void loadGameProgress() {
 
 <div style="display:flex; gap:16px; flex-wrap:wrap; margin:24px 0;">
 
-<a href="quiz_demo.html" style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg, #38bdf8, #0ea5e9); color:#fff; text-decoration:none; border-radius:10px; font-weight:700; font-size:1.05rem; box-shadow:0 4px 16px rgba(56,189,248,0.3);">
+<a href="quiz-demo.html" style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg, #38bdf8, #0ea5e9); color:#fff; text-decoration:none; border-radius:10px; font-weight:700; font-size:1.05rem; box-shadow:0 4px 16px rgba(56,189,248,0.3);">
   🧮 点击在线体验：实验1 — 算术测试
 </a>
 
-<a href="minesweeper_demo.html" style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg, #a78bfa, #7c3aed); color:#fff; text-decoration:none; border-radius:10px; font-weight:700; font-size:1.05rem; box-shadow:0 4px 16px rgba(167,139,250,0.3);">
+<a href="minesweeper-demo.html" style="display:inline-block; padding:14px 28px; background:linear-gradient(135deg, #a78bfa, #7c3aed); color:#fff; text-decoration:none; border-radius:10px; font-weight:700; font-size:1.05rem; box-shadow:0 4px 16px rgba(167,139,250,0.3);">
   💣 点击在线体验：实验2 — 经典扫雷
 </a>
 
